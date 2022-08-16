@@ -1,0 +1,5 @@
+crails-assets
+
+# Testscript output directory (can be symlink).
+#
+test-crails-assets
