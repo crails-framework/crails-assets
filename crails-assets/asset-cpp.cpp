@@ -51,9 +51,9 @@ static std::string filepath_to_varname(const std::string& filepath)
 
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const std::vector<std::string>& blacklist)
 {
-  std::stringstream stream_hpp, stream_cpp;
+  std::stringstream stream_hpp, stream_cpp, stream_js;
   std::string_view assets_ns = "Assets";
-  Crails::RenderFile header, source;
+  Crails::RenderFile header, source, javascript;
   std::map<std::string, std::string> varname_map;
 
   stream_hpp << "#ifndef APPLICATION_ASSETS_HPP" << std::endl;
@@ -62,11 +62,13 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_hpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
   stream_cpp << "#include \"assets.hpp\"" << std::endl;
   stream_cpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
+  stream_js << "export const Assets = {";
   for (auto it = file_map.begin() ; it != file_map.end() ; ++it)
   {
     if (std::find(blacklist.begin(), blacklist.end(), std::string(it->first)) == blacklist.end())
     {
-      std::string varname = filepath_to_varname(file_map.get_alias(it->first));
+      std::string alias = file_map.get_alias(it->first);
+      std::string varname = filepath_to_varname(alias);
 
       if (varname_map.find(varname) != varname_map.end())
       {
@@ -81,13 +83,18 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
       }
       stream_hpp << "  extern const std::string_view " << varname << ';' << std::endl;
       stream_cpp << "  const std::string_view " << varname << "(\"" << public_path_for({it->first, it->second}) << "\");" << std::endl;
+      if (it != file_map.begin()) stream_js << ',' << std::endl;
+      stream_js << "  \"" << alias << "\": \"" << public_path_for({it->first, it->second});
     }
   }
+  stream_js << std::endl << '}' << std::endl;
   stream_cpp << '}' << std::endl;
   stream_hpp << '}' << std::endl << "#endif" << std::endl;
   header.open(output_path.data() + std::string("/assets.hpp"));
   source.open(output_path.data() + std::string("/assets.cpp"));
+  javascript.open(output_path.data() + std::string("/assets.js"));
   header.set_body(stream_hpp.str().c_str(), stream_hpp.str().length());
   source.set_body(stream_cpp.str().c_str(), stream_cpp.str().length());
+  javascript.set_body(stream_js.str().c_str(), stream_js.str().length());
   return true;
 }
