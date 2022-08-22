@@ -58,7 +58,6 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
 
   stream_hpp << "#ifndef APPLICATION_ASSETS_HPP" << std::endl;
   stream_hpp << "#define APPLICATION_ASSETS_HPP" << std::endl;
-  stream_hpp << "#include <string_view>" << std::endl;
   stream_hpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
   stream_cpp << "#include \"assets.hpp\"" << std::endl;
   stream_cpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
@@ -81,8 +80,8 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
         std::cerr << "Cannot generate a variable name for `" << it->first << "`: path is too long." << std::endl;
         return false;
       }
-      stream_hpp << "  extern const std::string_view " << varname << ';' << std::endl;
-      stream_cpp << "  const std::string_view " << varname << "(\"" << public_path_for({it->first, it->second}) << "\");" << std::endl;
+      stream_hpp << "  extern const char* " << varname << ';' << std::endl;
+      stream_cpp << "  const char* " << varname << " = \"" << public_path_for({it->first, it->second}) << "\";" << std::endl;
       if (it != file_map.begin()) stream_js << ',' << std::endl;
       stream_js << "  \"" << alias << "\": \"" << public_path_for({it->first, it->second});
     }

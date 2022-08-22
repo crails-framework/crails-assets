@@ -285,6 +285,7 @@ int main (int argc, char* argv[])
     std::cout << "Outputing files to " << output << std::endl;
     files.output_to(output, compression);
     generate_reference_files(files, "lib/", {});
+    return 0;
   }
   else
     std::cerr << "inputs and output arguments are required" << std::endl;
