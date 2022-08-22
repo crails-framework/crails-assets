@@ -124,15 +124,30 @@ bool FileMapper::output_to(const std::string& output_directory, CompressionStrat
       return false;
     }
   }
-  for (auto it = begin() ; it != end() ; ++it)
+  for (auto it = begin() ; it != end() ;)
   {
     boost::filesystem::path input_path(it->first);
     boost::filesystem::path output_path(output_base.string() + filename_with_checksum({it->first, it->second}));
     std::shared_ptr<boost::process::child> process;
     std::vector<CompressionStrategy> strategies = {compression};
 
+    //
+    // Attempt to generate file in the public directory
+    //
     if (!generate_file(input_path, output_path))
       return false;
+    //
+    // If no file has been generated, remove it from the FileMapper
+    //
+    if (!boost::filesystem::exists(output_path))
+    {
+      it = erase(it);
+      continue ;
+    }
+    ++it;
+    //
+    // Apply compression on the generated file
+    //
     if (compression == NoCompression)
       continue ;
     else if (compression == AllCompressions)
@@ -143,6 +158,9 @@ bool FileMapper::output_to(const std::string& output_directory, CompressionStrat
       compression_processes.push_back(process);
     }
   }
+  //
+  // Wait for the compression processes to end
+  //
   for (auto process : compression_processes)
   {
     process->wait();

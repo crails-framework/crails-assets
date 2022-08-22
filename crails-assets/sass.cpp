@@ -50,10 +50,7 @@ bool generate_sass(const boost::filesystem::path& input_path, const boost::files
   auto sass_impl = find_sass();
 
   if (input_path.filename().string()[0] == '_')
-  {
-    std::cout << "[crails-sass] skipping partial " << input_path.string() << std::endl;
     return true;
-  }
   if (sass_impl.first.length() > 0)
   {
     Crails::RenderFile render_file;
