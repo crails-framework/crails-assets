@@ -170,7 +170,7 @@ bool FileMapper::output_to(const std::string& output_directory, CompressionStrat
   return true;
 }
 
-bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::path directory, const std::string& pattern)
+bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::path directory, const std::string& scope, const std::string& pattern)
 {
   if (boost::filesystem::is_directory(directory))
   {
@@ -184,20 +184,20 @@ bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::
 
       if (boost::filesystem::is_directory(entry.path()))
       {
-        if (collect_files(root, entry.path(), pattern))
+        if (collect_files(root, entry.path(), scope, pattern))
           continue ;
         return false;
       }
       if (match == std::sregex_iterator())
         continue ;
-      if (!generate_checksum(root, entry.path()))
+      if (!generate_checksum(root, entry.path(), scope))
         return false;
     }
   }
   return true;
 }
 
-bool FileMapper::generate_checksum(const boost::filesystem::path& root, const boost::filesystem::path& source)
+bool FileMapper::generate_checksum(const boost::filesystem::path& root, const boost::filesystem::path& source, const std::string& scope)
 {
   boost::process::ipstream pipe_stream;
   boost::process::child    sum_process(
@@ -212,7 +212,7 @@ bool FileMapper::generate_checksum(const boost::filesystem::path& root, const bo
   {
     std::strncpy(sum, line.c_str(), 32);
     emplace(source.string(), std::string(sum, 32));
-    set_alias(source.string(), root);
+    set_alias(source.string(), root, scope);
   }
   else
   {
@@ -235,6 +235,23 @@ static CompressionStrategy get_compression_strategy(const std::string& param)
   return NoCompression;
 }
 
+static void extract_alias_from_directory_option(const std::string& option, std::string& directory, std::string& alias)
+{
+  unsigned int i = 0;
+
+  directory = option;
+  for (; i < option.length() ; ++i)
+  {
+    if (option[i] == ':')
+    {
+      alias = option.substr(0, i);
+      directory = option.substr(i + 1);
+      if (alias.length() > 0 && alias[alias.length() - 1] != '/')
+        alias += '/';
+      break ;
+    }
+  }
+}
 static std::vector<std::string> find_directories(const std::string& inputs)
 {
   std::vector<std::string> directories;
@@ -262,7 +279,7 @@ int main (int argc, char* argv[])
   boost::program_options::variables_map options;
 
   desc.add_options()
-    ("inputs,i",      boost::program_options::value<std::string>(), "list of input folders")
+    ("inputs,i",      boost::program_options::value<std::vector<std::string>>(), "list of input folders. You may prefix each path with an alias, separated by a colon.")
     ("output,o",      boost::program_options::value<std::string>(), "output folder")
     ("compression,c", boost::program_options::value<std::string>(), "gzip, brotli, all or none; defaults to gzip")
     ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)");
@@ -271,16 +288,20 @@ int main (int argc, char* argv[])
   if (options.count("inputs") && options.count("output"))
   {
     std::string pattern(".*");
-    auto        directories = find_directories(options["inputs"].as<std::string>());
+    auto        directory_options = options["inputs"].as<std::vector<std::string>>();
     std::string output = options["output"].as<std::string>();
     CompressionStrategy compression = options.count("compression") ? get_compression_strategy(options["compression"].as<std::string>()) : Gzip;
 
     if (options.count("sourcemaps"))
       with_source_maps = options["sourcemaps"].as<bool>();
-    for (const std::string& directory : directories)
+    for (const std::string& directory_option : directory_options)
     {
+      std::string alias;
+      std::string directory;
+
+      extract_alias_from_directory_option(directory_option, directory, alias);
       std::cout << "Collecting files from directory: " << directory << std::endl;
-      if (files.collect_files(boost::filesystem::path(directory), pattern))
+      if (files.collect_files(boost::filesystem::path(directory), alias, pattern))
         continue ;
       else
         return -1;
