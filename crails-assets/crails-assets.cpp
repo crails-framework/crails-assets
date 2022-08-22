@@ -172,24 +172,27 @@ bool FileMapper::output_to(const std::string& output_directory, CompressionStrat
 
 bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::path directory, const std::string& pattern)
 {
-  boost::filesystem::recursive_directory_iterator dir(directory);
-  std::regex matcher(pattern.c_str());
-
-  for (auto& entry : dir)
+  if (boost::filesystem::is_directory(directory))
   {
-    std::string filename = entry.path().filename().string();
-    auto match = std::sregex_iterator(filename.begin(), filename.end(), matcher);
+    boost::filesystem::recursive_directory_iterator dir(directory);
+    std::regex matcher(pattern.c_str());
 
-    if (boost::filesystem::is_directory(entry.path()))
+    for (auto& entry : dir)
     {
-      if (collect_files(root, entry.path(), pattern))
+      std::string filename = entry.path().filename().string();
+      auto match = std::sregex_iterator(filename.begin(), filename.end(), matcher);
+
+      if (boost::filesystem::is_directory(entry.path()))
+      {
+        if (collect_files(root, entry.path(), pattern))
+          continue ;
+        return false;
+      }
+      if (match == std::sregex_iterator())
         continue ;
-      return false;
+      if (!generate_checksum(root, entry.path()))
+        return false;
     }
-    if (match == std::sregex_iterator())
-      continue ;
-    if (!generate_checksum(root, entry.path()))
-      return false;
   }
   return true;
 }
