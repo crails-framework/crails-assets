@@ -3,9 +3,12 @@
 #include <boost/process.hpp>
 #include <string_view>
 #include <regex>
+#include <crails/renderer.hpp>
 #include <crails/render_file.hpp>
 #include "file_mapper.hpp"
 #include "compression.hpp"
+
+const std::string Crails::Renderer::default_format = "*";
 
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const std::vector<std::string>& blacklist);
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy);
