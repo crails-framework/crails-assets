@@ -1,4 +1,4 @@
-#include <crails/render_file.hpp>
+#include <crails/cli/filesystem.hpp>
 #include <sstream>
 #include <iostream>
 #include "file_mapper.hpp"
@@ -54,7 +54,6 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
 {
   std::stringstream stream_hpp, stream_cpp, stream_js;
   std::string_view assets_ns = "Assets";
-  Crails::RenderFile header, source, javascript;
   std::map<std::string, std::string> varname_map;
 
   stream_hpp << "#ifndef APPLICATION_ASSETS_HPP" << std::endl;
@@ -89,11 +88,8 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_js << std::endl << '}' << std::endl;
   stream_cpp << '}' << std::endl;
   stream_hpp << '}' << std::endl << "#endif" << std::endl;
-  header.open(output_path.data() + std::string("/assets.hpp"));
-  source.open(output_path.data() + std::string("/assets.cpp"));
-  javascript.open(output_path.data() + std::string("/assets.js"));
-  header.set_body(stream_hpp.str().c_str(), stream_hpp.str().length());
-  source.set_body(stream_cpp.str().c_str(), stream_cpp.str().length());
-  javascript.set_body(stream_js.str().c_str(), stream_js.str().length());
+  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), stream_hpp.str());
+  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), stream_cpp.str());
+  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.js"),  stream_js.str());
   return true;
 }

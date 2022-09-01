@@ -3,7 +3,7 @@
 #include <boost/process.hpp>
 #include <string_view>
 #include <regex>
-#include <crails/render_file.hpp>
+#include <crails/cli/filesystem.hpp>
 
 extern bool with_source_maps;
 
@@ -53,7 +53,6 @@ bool generate_sass(const boost::filesystem::path& input_path, const boost::files
     return true;
   if (sass_impl.first.length() > 0)
   {
-    Crails::RenderFile render_file;
     boost::process::ipstream pipe_stream;
     boost::process::child sass(
       sass_command(sass_impl, input_path),
@@ -70,8 +69,7 @@ bool generate_sass(const boost::filesystem::path& input_path, const boost::files
     injected_source = post_filter(stream.str());
     if (injected_source.length() == 0)
       return false;
-    render_file.open(output_path.string());
-    render_file.set_body(injected_source.c_str(), injected_source.length());
+    Crails::write_file("crails-assets", output_path.string(), injected_source);
     std::cout << "[crails-sass] generated css for `" << input_path.string() << "` at `" << output_path.string() << '`' << std::endl;
     return true;
   }
