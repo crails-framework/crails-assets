@@ -1,8 +1,8 @@
 libs =
 import libs += libboost-program-options%lib{boost_program_options}
 import libs += libboost-filesystem%lib{boost_filesystem}
-import libs += libboost-random%lib{boost_random}
 import libs += libcrails-renderer%lib{crails-renderer}
+import libs += libcrails-semantics%lib{crails-semantics}
 
 exe{crails-assets}: {hxx ixx txx cxx}{**} $libs testscript
 

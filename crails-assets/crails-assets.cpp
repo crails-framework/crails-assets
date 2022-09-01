@@ -5,12 +5,14 @@
 #include <regex>
 #include <crails/renderer.hpp>
 #include <crails/render_file.hpp>
+#include <crails/utils/split.hpp>
 #include "file_mapper.hpp"
 #include "compression.hpp"
+#include "exclusion_pattern.hpp"
 
 const std::string Crails::Renderer::default_format = "*";
 
-bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const std::vector<std::string>& blacklist);
+bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy);
 
 bool with_source_maps = true;
@@ -57,6 +59,7 @@ int main (int argc, char* argv[])
     ("inputs,i",      boost::program_options::value<std::vector<std::string>>(), "list of input folders. You may prefix each path with an alias, separated by a colon.")
     ("output,o",      boost::program_options::value<std::string>(), "output folder")
     ("compression,c", boost::program_options::value<std::string>(), "gzip, brotli, all or none; defaults to gzip")
+    ("ifndef",        boost::program_options::value<std::string>(), "exclude some assets from a C++ build based on a define (ex: --ifndef __CHEERP_CLIENT__:application.js:application.js.map)")
     ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)");
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), options);
   boost::program_options::notify(options);
@@ -66,9 +69,12 @@ int main (int argc, char* argv[])
     auto        directory_options = options["inputs"].as<std::vector<std::string>>();
     std::string output = options["output"].as<std::string>();
     CompressionStrategy compression = options.count("compression") ? get_compression_strategy(options["compression"].as<std::string>()) : Gzip;
+    ExclusionPattern exclusion_pattern;
 
     if (options.count("sourcemaps"))
       with_source_maps = options["sourcemaps"].as<bool>();
+    if (options.count("ifndef"))
+      exclusion_pattern = ExclusionPattern(options["ifndef"].as<string>());
     for (const std::string& directory_option : directory_options)
     {
       std::string alias;
@@ -83,7 +89,7 @@ int main (int argc, char* argv[])
     }
     std::cout << "Outputing files to " << output << std::endl;
     generate_public_folder(files, output, compression);
-    generate_reference_files(files, "lib/", {});
+    generate_reference_files(files, "lib/", exclusion_pattern);
     return 0;
   }
   else

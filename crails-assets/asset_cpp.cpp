@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include "file_mapper.hpp"
+#include "exclusion_pattern.hpp"
 
 std::string public_path_for(const std::pair<std::string, std::string>& name_and_checksum);
 
@@ -49,7 +50,7 @@ static std::string filepath_to_varname(const std::string& filepath)
   return output;
 }
 
-bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const std::vector<std::string>& blacklist)
+bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
 {
   std::stringstream stream_hpp, stream_cpp, stream_js;
   std::string_view assets_ns = "Assets";
@@ -64,27 +65,26 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_js << "export const Assets = {";
   for (auto it = file_map.begin() ; it != file_map.end() ; ++it)
   {
-    if (std::find(blacklist.begin(), blacklist.end(), std::string(it->first)) == blacklist.end())
-    {
-      std::string alias = file_map.get_alias(it->first);
-      std::string varname = filepath_to_varname(alias);
+    std::string alias = file_map.get_alias(it->first);
+    std::string varname = filepath_to_varname(alias);
 
-      if (varname_map.find(varname) != varname_map.end())
-      {
-        std::cerr << "Cannot generate a variable name for `" << it->first << "`: duplicate with `" << varname_map.at(varname) << '`' << std::endl;
-        return false;
-      }
-      varname_map.emplace(varname, it->first);
-      if (varname.length() > max_characters_in_variable_name)
-      {
-        std::cerr << "Cannot generate a variable name for `" << it->first << "`: path is too long." << std::endl;
-        return false;
-      }
-      stream_hpp << "  extern const char* " << varname << ';' << std::endl;
-      stream_cpp << "  const char* " << varname << " = \"" << public_path_for({it->first, it->second}) << "\";" << std::endl;
-      if (it != file_map.begin()) stream_js << ',' << std::endl;
-      stream_js << "  \"" << alias << "\": \"" << public_path_for({it->first, it->second});
+    if (varname_map.find(varname) != varname_map.end())
+    {
+      std::cerr << "Cannot generate a variable name for `" << it->first << "`: duplicate with `" << varname_map.at(varname) << '`' << std::endl;
+      return false;
     }
+    varname_map.emplace(varname, it->first);
+    if (varname.length() > max_characters_in_variable_name)
+    {
+      std::cerr << "Cannot generate a variable name for `" << it->first << "`: path is too long." << std::endl;
+      return false;
+    }
+    exclusion_pattern.protect(it->first, stream_hpp, [&]()
+    { stream_hpp << "  extern const char* " << varname << ';' << std::endl; });
+    exclusion_pattern.protect(it->first, stream_cpp, [&]()
+    { stream_cpp << "  const char* " << varname << " = \"" << public_path_for({it->first, it->second}) << "\";" << std::endl; });
+    if (it != file_map.begin()) stream_js << ',' << std::endl;
+    stream_js << "  \"" << alias << "\": \"" << public_path_for({it->first, it->second});
   }
   stream_js << std::endl << '}' << std::endl;
   stream_cpp << '}' << std::endl;
