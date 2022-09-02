@@ -56,9 +56,15 @@ int main (int argc, char* argv[])
     ("output,o",      boost::program_options::value<std::string>(), "output folder")
     ("compression,c", boost::program_options::value<std::string>(), "gzip, brotli, all or none; defaults to gzip")
     ("ifndef",        boost::program_options::value<std::string>(), "exclude some assets from a C++ build based on a define (ex: --ifndef __CHEERP_CLIENT__:application.js:application.js.map)")
-    ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)");
+    ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)")
+    ("help,h", "display help message");
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), options);
   boost::program_options::notify(options);
+  if (options.count("help"))
+  {
+    std::cout << desc << std::endl;
+    return 0;
+  }
   if (options.count("inputs") && options.count("output"))
   {
     std::string pattern(".*");

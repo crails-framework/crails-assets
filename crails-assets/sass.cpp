@@ -3,7 +3,9 @@
 #include <boost/process.hpp>
 #include <string_view>
 #include <regex>
+#include <filesystem>
 #include <crails/cli/filesystem.hpp>
+#include <crails/cli/process.hpp>
 
 extern bool with_source_maps;
 
@@ -22,13 +24,9 @@ static std::pair<std::string, std::string> find_sass()
 {
   for (const std::string& candidate : sass_candidates)
   {
-    boost::process::ipstream pipe_stream;
-    boost::process::child which("which " + candidate, boost::process::std_out > pipe_stream);
-    std::string result;
+    std::string result = Crails::which(candidate);
 
-    std::getline(pipe_stream, result);
-    which.wait();
-    if (which.exit_code() == 0)
+    if (result.length() > 0)
       return {candidate, result};
   }
   return {"", ""};

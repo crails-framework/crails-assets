@@ -10,6 +10,7 @@ typedef std::function<std::string(const std::string&)> PostFilter;
 const std::string public_scope = "assets/";
 
 bool generate_sass(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, PostFilter post_filter);
+bool generate_js(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, const FileMapper&);
 
 static std::string filename_with_checksum(const std::pair<std::string, std::string>& name_and_checksum)
 {
@@ -75,6 +76,8 @@ static bool generate_file(const FileMapper& filemap, const boost::filesystem::pa
 
   if (extension == ".scss" || extension == ".sass")
     return generate_sass(input_path, output_path, post_filter);
+  if (extension == ".js")
+    return generate_js(input_path, output_path, filemap);
   return ::copy_file(input_path, output_path);
 }
 
