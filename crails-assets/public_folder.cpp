@@ -101,23 +101,26 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
     std::shared_ptr<boost::process::child> process;
     std::vector<CompressionStrategy> strategies = {compression};
 
-    //
+    // If a file with that name already exists, then the file hasn't changed since the last run
+    if (boost::filesystem::exists(output_path))
+    {
+      ++it;
+      continue ;
+    }
+
     // Attempt to generate file in the public directory
-    //
     if (!generate_file(filemap, input_path, output_path))
       return false;
-    //
+
     // If no file has been generated, remove it from the FileMapper
-    //
     if (!boost::filesystem::exists(output_path))
     {
       it = filemap.erase(it);
       continue ;
     }
     ++it;
-    //
+
     // Apply compression on the generated file
-    //
     if (compression == NoCompression)
       continue ;
     else if (compression == AllCompressions)
