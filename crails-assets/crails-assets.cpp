@@ -84,7 +84,7 @@ int main (int argc, char* argv[])
 
       extract_alias_from_directory_option(directory_option, directory, alias);
       std::cout << "Collecting files from directory: " << directory << std::endl;
-      if (files.collect_files(boost::filesystem::path(directory), alias, pattern))
+      if (files.collect_files(std::filesystem::path(directory), alias, pattern))
         continue ;
       else
         return -1;

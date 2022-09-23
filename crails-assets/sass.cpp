@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <string_view>
 #include <regex>
@@ -32,7 +31,7 @@ static std::pair<std::string, std::string> find_sass()
   return {"", ""};
 }
 
-static std::string sass_command(const std::pair<std::string, std::string>& sass_impl, const boost::filesystem::path& input)
+static std::string sass_command(const std::pair<std::string, std::string>& sass_impl, const std::filesystem::path& input)
 {
   std::stringstream stream;
 
@@ -43,7 +42,7 @@ static std::string sass_command(const std::pair<std::string, std::string>& sass_
   return stream.str();
 }
 
-bool generate_sass(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, std::function<std::string(const std::string&)> post_filter)
+bool generate_sass(const std::filesystem::path& input_path, const std::filesystem::path& output_path, std::function<std::string(const std::string&)> post_filter)
 {
   auto sass_impl = find_sass();
 

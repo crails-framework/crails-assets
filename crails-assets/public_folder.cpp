@@ -1,7 +1,7 @@
 #include "file_mapper.hpp"
 #include "compression.hpp"
 #include <boost/process.hpp>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <regex>
 #include <iostream>
 
@@ -9,12 +9,12 @@ typedef std::function<std::string(const std::string&)> PostFilter;
 
 const std::string public_scope = "assets/";
 
-bool generate_sass(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, PostFilter post_filter);
-bool generate_js(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, const FileMapper&);
+bool generate_sass(const std::filesystem::path& input_path, const std::filesystem::path& output_path, PostFilter post_filter);
+bool generate_js(const std::filesystem::path& input_path, const std::filesystem::path& output_path, const FileMapper&);
 
 static std::string filename_with_checksum(const std::pair<std::string, std::string>& name_and_checksum)
 {
-  boost::filesystem::path filepath(name_and_checksum.first);
+  std::filesystem::path filepath(name_and_checksum.first);
 
   if (filepath.has_stem())
     return filepath.stem().string() + '-' + name_and_checksum.second + filepath.extension().string();
@@ -58,10 +58,10 @@ static std::string inject_asset_path(const FileMapper& filemap, const std::strin
   return result;
 }
 
-static bool copy_file(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path)
+static bool copy_file(const std::filesystem::path& input_path, const std::filesystem::path& output_path)
 {
-  boost::system::error_code ec;
-  boost::filesystem::copy_file(input_path, output_path, boost::filesystem::copy_option::none, ec);
+  std::error_code ec;
+  std::filesystem::copy_file(input_path, output_path, std::filesystem::copy_options::none, ec);
   if (ec)
     std::cout << "[crails-assets] No changes with " << input_path.string() << std::endl;
   else
@@ -69,7 +69,7 @@ static bool copy_file(const boost::filesystem::path& input_path, const boost::fi
   return true;
 }
 
-static bool generate_file(const FileMapper& filemap, const boost::filesystem::path& input_path, const boost::filesystem::path& output_path)
+static bool generate_file(const FileMapper& filemap, const std::filesystem::path& input_path, const std::filesystem::path& output_path)
 {
   std::string extension = input_path.extension().string();
   PostFilter post_filter = std::bind(&inject_asset_path, filemap, std::placeholders::_1);
@@ -84,11 +84,11 @@ static bool generate_file(const FileMapper& filemap, const boost::filesystem::pa
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy compression)
 {
   std::vector<std::shared_ptr<boost::process::child>> compression_processes;
-  boost::filesystem::path output_base(output_directory + '/' + public_scope);
+  std::filesystem::path output_base(output_directory + '/' + public_scope);
 
-  if (!boost::filesystem::is_directory(output_base))
+  if (!std::filesystem::is_directory(output_base))
   {
-    if (!boost::filesystem::create_directories(output_base))
+    if (!std::filesystem::create_directories(output_base))
     {
       std::cerr << "Cannot open directory " << output_base.string();
       return false;
@@ -96,13 +96,13 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
   }
   for (auto it = filemap.begin() ; it != filemap.end() ;)
   {
-    boost::filesystem::path input_path(it->first);
-    boost::filesystem::path output_path(output_base.string() + filename_with_checksum({it->first, it->second}));
+    std::filesystem::path input_path(it->first);
+    std::filesystem::path output_path(output_base.string() + filename_with_checksum({it->first, it->second}));
     std::shared_ptr<boost::process::child> process;
     std::vector<CompressionStrategy> strategies = {compression};
 
     // If a file with that name already exists, then the file hasn't changed since the last run
-    if (boost::filesystem::exists(output_path))
+    if (std::filesystem::exists(output_path))
     {
       ++it;
       continue ;
@@ -113,7 +113,7 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
       return false;
 
     // If no file has been generated, remove it from the FileMapper
-    if (!boost::filesystem::exists(output_path))
+    if (!std::filesystem::exists(output_path))
     {
       it = filemap.erase(it);
       continue ;

@@ -26,7 +26,7 @@ static void replace_wasm_in_comet_javascript(const std::filesystem::path& input_
   }
 }
 
-bool generate_js(const boost::filesystem::path& input_path, const boost::filesystem::path& output_path, const FileMapper& filemap)
+bool generate_js(const std::filesystem::path& input_path, const std::filesystem::path& output_path, const FileMapper& filemap)
 {
   auto uglify_impl = Crails::which("uglifyjs");
   std::string contents;

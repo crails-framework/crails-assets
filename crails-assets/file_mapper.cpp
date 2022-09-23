@@ -17,11 +17,11 @@ bool FileMapper::get_key_from_alias(const std::string& alias, std::string& key) 
   return false;
 }
 
-bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::path directory, const std::string& scope, const std::string& pattern)
+bool FileMapper::collect_files(std::filesystem::path root, std::filesystem::path directory, const std::string& scope, const std::string& pattern)
 {
-  if (boost::filesystem::is_directory(directory))
+  if (std::filesystem::is_directory(directory))
   {
-    boost::filesystem::recursive_directory_iterator dir(directory);
+    std::filesystem::recursive_directory_iterator dir(directory);
     std::regex matcher(pattern.c_str());
 
     for (auto& entry : dir)
@@ -29,7 +29,7 @@ bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::
       std::string filename = entry.path().filename().string();
       auto match = std::sregex_iterator(filename.begin(), filename.end(), matcher);
 
-      if (boost::filesystem::is_directory(entry.path()))
+      if (std::filesystem::is_directory(entry.path()))
       {
         if (collect_files(root, entry.path(), scope, pattern))
           continue ;
@@ -44,7 +44,7 @@ bool FileMapper::collect_files(boost::filesystem::path root, boost::filesystem::
   return true;
 }
 
-bool FileMapper::generate_checksum(const boost::filesystem::path& root, const boost::filesystem::path& source, const std::string& scope)
+bool FileMapper::generate_checksum(const std::filesystem::path& root, const std::filesystem::path& source, const std::string& scope)
 {
   boost::process::ipstream pipe_stream;
   boost::process::child    sum_process(

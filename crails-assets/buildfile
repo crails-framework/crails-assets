@@ -1,6 +1,5 @@
-libs =
+#import libs += libboost-process%lib{boost_process}
 import libs += libboost-program-options%lib{boost_program_options}
-import libs += libboost-filesystem%lib{boost_filesystem}
 import libs += libcrails-cli%lib{crails-cli}
 import libs += libcrails-semantics%lib{crails-semantics}
 
