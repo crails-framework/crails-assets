@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <sstream>
 #include <crails/cli/process.hpp>
 #include <crails/cli/filesystem.hpp>
 #include <crails/read_file.hpp>
