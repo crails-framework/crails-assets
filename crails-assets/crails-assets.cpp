@@ -11,6 +11,7 @@
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy);
 
+bool verbose_mode = false;
 bool with_source_maps = true;
 
 static CompressionStrategy get_compression_strategy(const std::string& param)
@@ -57,6 +58,7 @@ int main (int argc, char* argv[])
     ("compression,c", boost::program_options::value<std::string>(), "gzip, brotli, all or none; defaults to gzip")
     ("ifndef",        boost::program_options::value<std::string>(), "exclude some assets from a C++ build based on a define (ex: --ifndef __CHEERP_CLIENT__:application.js:application.js.map)")
     ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)")
+    ("verbose,v", "enable verbose mode")
     ("help,h", "display help message");
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), options);
   boost::program_options::notify(options);
@@ -65,6 +67,7 @@ int main (int argc, char* argv[])
     std::cout << desc << std::endl;
     return 0;
   }
+  verbose_mode = options.count("verbose");
   if (options.count("inputs") && options.count("output"))
   {
     std::string pattern(".*");
@@ -83,13 +86,15 @@ int main (int argc, char* argv[])
       std::string directory;
 
       extract_alias_from_directory_option(directory_option, directory, alias);
-      std::cout << "Collecting files from directory: " << directory << std::endl;
+      if (verbose_mode)
+        std::cout << "[crails-assets] collecting files from directory: " << directory << std::endl;
       if (files.collect_files(std::filesystem::path(directory), alias, pattern))
         continue ;
       else
         return -1;
     }
-    std::cout << "Outputing files to " << output << std::endl;
+    if (verbose_mode)
+      std::cout << "[crails-assets] outputing files to " << output << std::endl;
     if (generate_public_folder(files, output, compression)
     && (generate_reference_files(files, "lib/", exclusion_pattern)))
       return 0;

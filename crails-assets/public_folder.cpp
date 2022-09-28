@@ -7,6 +7,8 @@
 
 typedef std::function<std::string(const std::string&)> PostFilter;
 
+extern bool verbose_mode;
+
 const std::string public_scope = "assets/";
 
 bool generate_sass(const std::filesystem::path& input_path, const std::filesystem::path& output_path, PostFilter post_filter);
@@ -62,10 +64,13 @@ static bool copy_file(const std::filesystem::path& input_path, const std::filesy
 {
   std::error_code ec;
   std::filesystem::copy_file(input_path, output_path, std::filesystem::copy_options::none, ec);
-  if (ec)
-    std::cout << "[crails-assets] No changes with " << input_path.string() << std::endl;
-  else
-    std::cout << "[crails-assets] Copied `" << input_path.string() << "` to `" << output_path.string() << '`' << std::endl;
+  if (verbose_mode)
+  {
+    if (ec)
+      std::cout << "[crails-assets] No changes with " << input_path.string() << std::endl;
+    else
+      std::cout << "[crails-assets] Copied `" << input_path.string() << "` to `" << output_path.string() << '`' << std::endl;
+  }
   return true;
 }
 
