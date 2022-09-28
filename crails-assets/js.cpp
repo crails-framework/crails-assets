@@ -14,9 +14,11 @@ std::string public_path_for(const std::pair<std::string,std::string>& name_and_c
 
 static const std::vector<std::string> minify_candidates{
   "uglifyjs",
+  "closure-compiler",
   "yuicompressor"
 };
 static const std::map<std::string, std::string> minify_options{
+  {"closure-compiler", "--js \"$input\" --js_output_file \"$output\""},
   {"uglifyjs",      "\"$input\" -o \"$output\" --compress"},
   {"yuicompressor", "\"$input\" -o \"$output\""}
 };
@@ -100,8 +102,13 @@ bool generate_js(const std::filesystem::path& input_path, const std::filesystem:
     Crails::write_file("crails-assets", temporary_file, contents);
     command << minifier.second
       << ' ' << replace_options(minify_options.at(minifier.first), {{"input", temporary_file}, {"output", output_path.string()}});
-    if (minifier.first == "uglifyjs" && with_source_maps && !has_sourcemaps)
-      command << " --source-map";
+    if (with_source_maps && !has_sourcemaps)
+    {
+      if (minifier.first == "uglifyjs")
+        command << " --source-map";
+      else if (minifier.first == "closure-compiler")
+        command << " --create_source_map \"" << (output_path.string() + ".map") << '"';
+    }
     if (verbose_mode)
       std::cout << "+ " << command.str() << std::endl;
     if (!Crails::run_command(command.str()))
