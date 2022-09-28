@@ -4,13 +4,18 @@
 #include <crails/cli/process.hpp>
 #include <crails/cli/filesystem.hpp>
 #include <crails/read_file.hpp>
+#include <iostream>
 #include "file_mapper.hpp"
 
 extern bool with_source_maps;
+extern bool verbose_mode;
 
 std::string public_path_for(const std::pair<std::string,std::string>& name_and_checksum);
 
-static const std::vector<std::string> minify_candidates{"uglifyjs", "yuicompressor"};
+static const std::vector<std::string> minify_candidates{
+  "uglifyjs",
+  "yuicompressor"
+};
 static const std::map<std::string, std::string> minify_options{
   {"uglifyjs",      "\"$input\" -o \"$output\" --compress"},
   {"yuicompressor", "\"$input\" -o \"$output\""}
@@ -59,22 +64,33 @@ static void replace_wasm_in_comet_javascript(const std::filesystem::path& input_
   }
 }
 
+static std::string sourcemap_comment(const std::filesystem::path& output_path)
+{
+  return "//# sourceMappingURL=" + output_path.filename().string() + ".map";
+}
+
 static void replace_sourcemaps(std::string& contents, const std::filesystem::path& output_path)
 {
-  std::regex regex("//#\\s*sourceMappingURL=([^\\s])");
+  std::regex regex("//#\\s*sourceMappingURL=[^\\s]+");
   auto match = std::sregex_iterator(contents.begin(), contents.end(), regex);
-  std::string replacement = "//# sourceMappingUrl=" + output_path.filename().string() + ".map";
 
-  contents = std::regex_replace(contents, regex, replacement);
+  contents = std::regex_replace(contents, regex, sourcemap_comment(output_path));
+}
+
+static bool already_has_sourcemaps(const std::filesystem::path& input_path, const FileMapper& filemap)
+{
+  std::string boop;
+
+  return filemap.find(input_path.string() + ".map") != filemap.end();
 }
 
 bool generate_js(const std::filesystem::path& input_path, const std::filesystem::path& output_path, const FileMapper& filemap)
 {
   auto minifier = find_minify();
   std::string contents;
+  bool has_sourcemaps = already_has_sourcemaps(input_path, filemap);
 
   Crails::read_file(input_path.string(), contents);
-  replace_sourcemaps(contents, output_path);
   replace_wasm_in_comet_javascript(input_path.string(), filemap, contents);
   if (minifier.first.length() > 0)
   {
@@ -84,9 +100,18 @@ bool generate_js(const std::filesystem::path& input_path, const std::filesystem:
     Crails::write_file("crails-assets", temporary_file, contents);
     command << minifier.second
       << ' ' << replace_options(minify_options.at(minifier.first), {{"input", temporary_file}, {"output", output_path.string()}});
-    if (minifier.first == "uglifyjs" && with_source_maps)
-      command << " --source-map \"" << output_path.string() << ".map\"";
-    return Crails::run_command(command.str()) == 0;
+    if (minifier.first == "uglifyjs" && with_source_maps && !has_sourcemaps)
+      command << " --source-map";
+    if (verbose_mode)
+      std::cout << "+ " << command.str() << std::endl;
+    if (!Crails::run_command(command.str()))
+      return false;
+    if (!has_sourcemaps)
+      return true;
+    Crails::read_file(output_path.string(), contents);
+    contents += sourcemap_comment(output_path);
   }
+  else
+    replace_sourcemaps(contents, output_path);
   return Crails::write_file("crails-assets", output_path.string(), contents);
 }
