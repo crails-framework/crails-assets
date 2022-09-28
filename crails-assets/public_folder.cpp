@@ -97,9 +97,21 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
   for (auto it = filemap.begin() ; it != filemap.end() ;)
   {
     std::filesystem::path input_path(it->first);
-    std::filesystem::path output_path(output_base.string() + filename_with_checksum({it->first, it->second}));
+    std::filesystem::path output_path(output_base.string() + filename_with_checksum(*it));
     std::shared_ptr<boost::process::child> process;
     std::vector<CompressionStrategy> strategies = {compression};
+
+    // If the name finishes with .map, it is a map file, and needs to be named after the file it maps
+    if (it->first.substr(it->first.length() - 4) == ".map")
+    {
+      auto mapped_file = filemap.find(it->first.substr(0, it->first.length() - 4));
+      if (mapped_file == filemap.end())
+      {
+        std::cerr << "[crails-assets] could not find mapped file for " << it->first << std::endl;
+        return false;
+      }
+      output_path = output_base.string() + filename_with_checksum(*mapped_file) + ".map";
+    }
 
     // If a file with that name already exists, then the file hasn't changed since the last run
     if (std::filesystem::exists(output_path))
