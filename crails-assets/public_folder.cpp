@@ -110,7 +110,10 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
 
     // Attempt to generate file in the public directory
     if (!generate_file(filemap, input_path, output_path))
+    {
+      std::cerr << "[crails-assets] you have an issue to fix in " << input_path.string() << std::endl;
       return false;
+    }
 
     // If no file has been generated, remove it from the FileMapper
     if (!std::filesystem::exists(output_path))

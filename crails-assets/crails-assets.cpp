@@ -90,9 +90,9 @@ int main (int argc, char* argv[])
         return -1;
     }
     std::cout << "Outputing files to " << output << std::endl;
-    generate_public_folder(files, output, compression);
-    generate_reference_files(files, "lib/", exclusion_pattern);
-    return 0;
+    if (generate_public_folder(files, output, compression)
+    && (generate_reference_files(files, "lib/", exclusion_pattern)))
+      return 0;
   }
   else
     std::cerr << "inputs and output arguments are required" << std::endl;
