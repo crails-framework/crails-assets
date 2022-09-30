@@ -8,6 +8,7 @@
 #include "compression.hpp"
 #include "exclusion_pattern.hpp"
 
+bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy);
 
@@ -58,6 +59,7 @@ int main (int argc, char* argv[])
     ("compression,c", boost::program_options::value<std::string>(), "gzip, brotli, all or none; defaults to gzip")
     ("ifndef",        boost::program_options::value<std::string>(), "exclude some assets from a C++ build based on a define (ex: --ifndef __CHEERP_CLIENT__:application.js:application.js.map)")
     ("sourcemaps,d",  boost::program_options::value<bool>(),        "generates sourcemaps (true by default)")
+    ("update,u", "append or update to the existing asset register instead of generating a new register")
     ("verbose,v", "enable verbose mode")
     ("help,h", "display help message");
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), options);
@@ -95,9 +97,15 @@ int main (int argc, char* argv[])
     }
     if (verbose_mode)
       std::cout << "[crails-assets] outputing files to " << output << std::endl;
-    if (generate_public_folder(files, output, compression)
-    && (generate_reference_files(files, "lib/", exclusion_pattern)))
-      return 0;
+    if (generate_public_folder(files, output, compression))
+    {
+      bool success;
+
+      success = options.count("update")
+        ? update_reference_files(files, "lib/", exclusion_pattern)
+        : generate_reference_files(files, "lib/", exclusion_pattern);
+      return success ? 0 : -1;
+    }
   }
   else
     std::cerr << "inputs and output arguments are required" << std::endl;

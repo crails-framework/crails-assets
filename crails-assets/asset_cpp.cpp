@@ -1,10 +1,13 @@
 #include <crails/cli/filesystem.hpp>
 #include <sstream>
 #include <iostream>
+#include <regex>
 #include "file_mapper.hpp"
 #include "exclusion_pattern.hpp"
 
 std::string public_path_for(const std::pair<std::string, std::string>& name_and_checksum);
+
+static const std::string_view assets_ns = "Assets";
 
 const unsigned short max_characters_in_variable_name = 255;
 const std::vector<std::string> reserved_keywords{
@@ -61,7 +64,7 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_hpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
   stream_cpp << "#include \"assets.hpp\"" << std::endl;
   stream_cpp << "namespace " << assets_ns << std::endl << '{' << std::endl;
-  stream_js << "export const Assets = {";
+  stream_js << "export const " << assets_ns << " = {";
   for (auto it = file_map.begin() ; it != file_map.end() ; ++it)
   {
     std::string alias = file_map.get_alias(it->first);
@@ -91,5 +94,67 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), stream_hpp.str());
   Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), stream_cpp.str());
   Crails::write_file("crails-assets", output_path.data() + std::string("/assets.js"),  stream_js.str());
+  return true;
+}
+
+bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
+{
+  std::string assets_hpp;
+  std::string assets_cpp;
+  bool loaded;
+
+  loaded = Crails::read_file(output_path.data() + std::string("/assets.hpp"), assets_hpp)
+        && Crails::read_file(output_path.data() + std::string("/assets.cpp"), assets_cpp);
+  if (!loaded)
+  {
+    std::cerr << "Could not open assets.hpp and/or assets.cpp" << std::endl;
+    return false;
+  }
+  for (auto it = file_map.begin() ; it != file_map.end() ; ++it)
+  {
+    std::string alias = file_map.get_alias(it->first);
+    std::string varname = filepath_to_varname(alias);
+    std::string pattern("extern const char* " + varname);
+
+    if (assets_hpp.find(pattern) == std::string::npos)
+    {
+      stringstream stream_hpp, stream_cpp;
+      auto add_pattern = std::string("namespace ") + assets_ns.data() + "\n{\n";
+      auto hpp_start_at = assets_hpp.find(add_pattern);
+      auto cpp_start_at = assets_cpp.find(add_pattern);
+
+      stream_hpp << assets_hpp.substr(0, hpp_start_at) << add_pattern;
+      stream_cpp << assets_cpp.substr(0, cpp_start_at) << add_pattern;
+      exclusion_pattern.protect(it->first, stream_hpp, [&]()
+      { stream_hpp << "  extern const char* " << varname << ';' << std::endl; });
+      exclusion_pattern.protect(it->first, stream_cpp, [&]()
+      { stream_cpp << "  const char* " << varname << " = \"" << public_path_for({it->first, it->second}) << "\";" << std::endl; });
+      stream_hpp << assets_hpp.substr(hpp_start_at + add_pattern.length());
+      stream_cpp << assets_cpp.substr(cpp_start_at + add_pattern.length());
+      assets_hpp = stream_hpp.str();
+      assets_cpp = stream_cpp.str();
+    }
+    else
+    {
+      stringstream stream_cpp;
+      std::regex cpp_pattern("const\\schar\\*\\s" + varname + "\\s=\\s\"[^\"]+\";");
+      auto match = std::sregex_iterator(assets_cpp.begin(), assets_cpp.end(), cpp_pattern);
+
+      if (match != std::sregex_iterator())
+      {
+        stream_cpp << assets_cpp.substr(0, match->position());
+        stream_cpp << "const char* " << varname << " = \"" << public_path_for({it->first, it->second}) << "\";";
+        stream_cpp << assets_cpp.substr(match->position() + match->length());
+        assets_cpp = stream_cpp.str();
+      }
+      else
+      {
+        std::cerr << "Broken register in assets.cpp. Restart without the --update option" << std::endl;
+        return false;
+      }
+    }
+  }
+  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), assets_hpp);
+  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), assets_cpp);
   return true;
 }

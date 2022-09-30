@@ -17,29 +17,41 @@ bool FileMapper::get_key_from_alias(const std::string& alias, std::string& key) 
   return false;
 }
 
+bool FileMapper::collect_file(std::filesystem::path root, std::filesystem::path filepath, const std::string& scope, const std::string& pattern)
+{
+  std::regex matcher(pattern.c_str());
+  std::string filename = filepath.filename().string();
+  auto match = std::sregex_iterator(filename.begin(), filename.end(), matcher);
+
+  if (std::filesystem::is_directory(filepath))
+  {
+    if (collect_files(root, filepath, scope, pattern))
+      return true;
+    return false;
+  }
+  else if (match != std::sregex_iterator())
+    return generate_checksum(root, filepath, scope);
+  return true;
+}
+
 bool FileMapper::collect_files(std::filesystem::path root, std::filesystem::path directory, const std::string& scope, const std::string& pattern)
 {
   if (std::filesystem::is_directory(directory))
   {
     std::filesystem::recursive_directory_iterator dir(directory);
-    std::regex matcher(pattern.c_str());
 
     for (auto& entry : dir)
     {
-      std::string filename = entry.path().filename().string();
-      auto match = std::sregex_iterator(filename.begin(), filename.end(), matcher);
-
-      if (std::filesystem::is_directory(entry.path()))
-      {
-        if (collect_files(root, entry.path(), scope, pattern))
-          continue ;
-        return false;
-      }
-      if (match == std::sregex_iterator())
-        continue ;
-      if (!generate_checksum(root, entry.path(), scope))
+      if (!collect_file(root, entry.path(), scope, pattern))
         return false;
     }
+  }
+  else if (std::filesystem::is_regular_file(directory))
+  {
+    if (root == directory)
+      root = directory.parent_path();
+    if (!collect_file(root, directory, scope, pattern))
+      return false;
   }
   return true;
 }

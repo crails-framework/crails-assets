@@ -19,5 +19,6 @@ struct FileMapper : public std::map<std::string, std::string>
   bool        collect_files(std::filesystem::path directory, const std::string& scope, const std::string& pattern) { return collect_files(directory, directory, scope, pattern); }
 protected:
   bool        collect_files(std::filesystem::path root, std::filesystem::path directory, const std::string& scope, const std::string& pattern);
+  bool        collect_file(std::filesystem::path root, std::filesystem::path filepath, const std::string& scope, const std::string& pattern);
   bool        generate_checksum(const std::filesystem::path& root, const std::filesystem::path& source, const std::string& scope);
 };
