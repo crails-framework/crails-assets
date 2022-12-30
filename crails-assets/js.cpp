@@ -83,7 +83,7 @@ static bool already_has_sourcemaps(const std::filesystem::path& input_path, cons
 {
   std::string boop;
 
-  return filemap.find(input_path.string() + ".map") != filemap.end();
+  return filemap.find(input_path.filename().string() + ".map") != filemap.end();
 }
 
 bool generate_js(const std::filesystem::path& input_path, const std::filesystem::path& output_path, const FileMapper& filemap)

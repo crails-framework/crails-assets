@@ -1,0 +1,7 @@
+import libs += libboost-program-options%lib{boost_program_options}
+import libs += libcrails-cli%lib{crails-cli}
+import libs += libcrails-semantics%lib{crails-semantics}
+
+exe{crails-builtin-assets}: {hxx ixx txx cxx}{**} $libs
+
+cxx.poptions =+ "-I$out_root" "-I$src_root"
