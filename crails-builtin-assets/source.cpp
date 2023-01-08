@@ -91,7 +91,7 @@ void generate_source(const std::string& path, const std::string& classname, cons
     source.open(source_path, std::ios_base::app);
     source << classname << "::" << classname << "() : Crails::BuiltinAssets(\""
            << uri_root << "\", "
-           << '"' << compression_strategies.at(compression_strategy) << "\")" << std::endl;
+           << '"' << compression_strategy << "\")" << std::endl;
     source << '{' << std::endl;
     for (const auto& file : files)
     {
