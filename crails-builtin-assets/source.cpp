@@ -1,6 +1,7 @@
 #include <string>
 #include <map>
 #include <fstream>
+#include <cstdlib>
 #include <iostream>
 #include <crails/cli/process.hpp>
 #include <crails/utils/split.hpp>
@@ -17,41 +18,13 @@ std::string xxd_tmp_path = "/tmp/xxd_output";
 using namespace std;
 using namespace std::chrono_literals;
 
-// process.wait(), when called from this program, tends to
-// hang undefinitely... hence the need to re-implement Crails::run_command...
-// despite the fact that Crails::run_command itself was copied and pasted
-// from the boost documentation:
-// https://www.boost.org/doc/libs/1_67_0/doc/html/boost_process/tutorial.html
-bool my_run_command(const string& command, string& result)
-{
-  boost::process::ipstream stream;
-  boost::process::child process(command, boost::process::std_out > stream);
-  string line;
-  unsigned int i = 0;
-
-  while (process.running() && getline(stream, line) && !line.empty())
-  {
-    result += line + '\n';
-    i++;
-  }
-  stream.close();
-  process.wait_for(5s);
-  return process.exit_code() == 0;
-}
-
 static void compress_asset(const std::string& strategy, const std::string& filepath)
 {
   std::string command = strategy + " -kc " + filepath;
   std::string result;
-  std::ofstream output;
 
-  //command = "cat " + filepath;
   std::cout << "+ " << command << std::endl;
-
-  my_run_command(command, result);
-  output.open(tmp_path);
-  output << result;
-  output.close();
+  std::system((command + " > " + tmp_path).c_str());
 }
 
 void generate_source(const std::string& path, const std::string& classname, const std::string& compression_strategy, const std::string& uri_root, const std::map<std::string, std::string>& files)
@@ -64,6 +37,7 @@ void generate_source(const std::string& path, const std::string& classname, cons
     source << "#include \"" << header_path << "\"" << std::endl << std::endl;
     source.close();
   }
+  // Use xxd to append the files as binary in the C++ file
   for (const auto& file : files)
   {
     std::string command, output;
@@ -78,14 +52,34 @@ void generate_source(const std::string& path, const std::string& classname, cons
     std::cout << "+ " << command << std::endl;
 
     // the boost::process systematically truncates the output for some files,
-    // so we're working around it by leaving the output redirection to 'sh'
+    // so we're working around it by using std::system and shell redirections
     // instead, then calling Crails::read_file.
-    command = "sh -c \"" + command + " > " + xxd_tmp_path + '"';
-    my_run_command(command, output);
+    std::system((command + " > " + xxd_tmp_path).c_str());
     Crails::read_file(xxd_tmp_path, output);
     source << output;
     source.close();
   }
+  // Makes the length variables static and const
+  {
+    std::string command, output;
+   
+    command =  std::string("awk ")
+      + '\''
+      + "{ if ($0 ~ /^unsigned/) { gsub(\"unsigned\", \"static const unsigned\"); print $0 } else { print $0 } }"
+      + '\''
+      + ' ' + source_path
+      + " > /tmp/tmpfile";
+    std::cout << command << std::endl;
+    std::system(command.c_str());
+    Crails::read_file("/tmp/tmpfile", output);
+    {
+      std::ofstream source;
+      source.open(source_path);
+      source << output;
+      source.close();
+    }
+  }
+  // Append the constructor for BuiltinAssets
   {
     std::ofstream source;
     source.open(source_path, std::ios_base::app);
@@ -96,8 +90,8 @@ void generate_source(const std::string& path, const std::string& classname, cons
     for (const auto& file : files)
     {
       source << "  add(\"" << file.second << "\", "
-	     << "reinterpret_cast<const char*>(::" << filepath_to_varname(file.second) << "), "
-	     << filepath_to_varname(file.second) << "_len);" << std::endl;
+             << "reinterpret_cast<const char*>(::" << filepath_to_varname(file.second) << "), "
+             << filepath_to_varname(file.second) << "_len);" << std::endl;
     }
     source << '}' << std::endl;
   }

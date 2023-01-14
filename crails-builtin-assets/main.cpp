@@ -18,7 +18,7 @@ int main(int argc, const char** argv)
   boost::program_options::variables_map options;
 
   desc.add_options()
-    ("inputs,i", boost::program_options::value<std::vector<std::string>>(), "list of inputs folders")
+    ("inputs,i", boost::program_options::value<std::vector<std::string>>()->multitoken(), "list of inputs folders")
     ("output,o", boost::program_options::value<std::string>(), "output source and header filename, without extension")
     ("classname,c", boost::program_options::value<std::string>(), "classname for the builtin asset library")
     ("compression,z", boost::program_options::value<std::string>(), "compression strategy (gzip or brotli)")
