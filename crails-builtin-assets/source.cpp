@@ -18,6 +18,17 @@ std::string xxd_tmp_path = "/tmp/xxd_output";
 using namespace std;
 using namespace std::chrono_literals;
 
+static string replace_all(std::string str, const std::string& from, const std::string& to)
+{
+  size_t start_pos = 0;
+  while((start_pos = str.find(from, start_pos)) != std::string::npos)
+  {
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length();
+  }
+  return str;
+}
+
 static void compress_asset(const std::string& strategy, const std::string& filepath)
 {
   std::string command = strategy + " -kc " + filepath;
@@ -48,7 +59,11 @@ void generate_source(const std::string& path, const std::string& classname, cons
            << uri_root << file.second << "\";" << std::endl
            << "static const ";
     compress_asset(compression_strategy, file.first);
-    command = "xxd -n " + filepath_to_varname(file.second) + " -i " + tmp_path;
+    // Older versions of xxd don't support the option -n
+    //command = "xxd -n " + filepath_to_varname(file.second) + " -i " + tmp_path;
+    // PATCH for older versions of xxd
+    command = "xxd -i " + tmp_path;
+    // END PATCH for older versions of xxd
     std::cout << "+ " << command << std::endl;
 
     // the boost::process systematically truncates the output for some files,
@@ -56,6 +71,12 @@ void generate_source(const std::string& path, const std::string& classname, cons
     // instead, then calling Crails::read_file.
     std::system((command + " > " + xxd_tmp_path).c_str());
     Crails::read_file(xxd_tmp_path, output);
+
+    // PATCH for older versions of xxd
+    filepath_to_varname(tmp_path);
+    output = replace_all(output, filepath_to_varname(tmp_path), filepath_to_varname(file.second));
+    // END PATCH for older versions of xxd
+
     source << output;
     source.close();
   }
