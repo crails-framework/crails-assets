@@ -1,9 +1,15 @@
 #include "file_mapper.hpp"
+#include <iostream>
 
 void FileMapper::collect_files(std::filesystem::path directory)
 {
-  directory = std::filesystem::canonical(directory);
-  collect_files(directory, directory);
+  std::error_code error_code;
+
+  directory = std::filesystem::canonical(directory, error_code);
+  if (!error_code)
+    collect_files(directory, directory);
+  else
+    std::cerr << "/!\\ no such directory '" << directory.string() << '\'' << std::endl;
 }
 
 void FileMapper::collect_files(std::filesystem::path root, std::filesystem::path path)

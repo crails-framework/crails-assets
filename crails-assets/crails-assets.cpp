@@ -102,8 +102,8 @@ int main (int argc, char* argv[])
       bool success;
 
       success = options.count("update")
-        ? update_reference_files(files, "lib/", exclusion_pattern)
-        : generate_reference_files(files, "lib/", exclusion_pattern);
+        ? update_reference_files(files, "app/autogen", exclusion_pattern)
+        : generate_reference_files(files, "app/autogen", exclusion_pattern);
       return success ? 0 : -1;
     }
   }
