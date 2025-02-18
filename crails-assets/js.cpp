@@ -19,8 +19,8 @@ static const std::vector<std::string> minify_candidates{
 };
 static const std::map<std::string, std::string> minify_options{
   {"closure-compiler", "--js \"$input\" --js_output_file \"$output\""},
-  {"uglifyjs",      "\"$input\" -o \"$output\" --compress"},
-  {"yuicompressor", "\"$input\" -o \"$output\""}
+  {"uglifyjs",         "\"$input\" -o \"$output\" --compress"},
+  {"yuicompressor",    "\"$input\" -o \"$output\""}
 };
 
 static std::pair<std::string, std::string> find_minify()
@@ -58,9 +58,9 @@ static void replace_wasm_in_comet_javascript(const std::filesystem::path& input_
 
   if ((pattern_position = contents.find_last_of(wasm_pattern)) != std::string::npos)
   {
-    if (filemap.get_key_from_alias(wasm_filepath, wasm_key))
+    if (filemap.get_key_from_alias(wasm_filepath.string(), wasm_key))
     {
-      std::string wasm_public_path = public_path_for({wasm_key, filemap.at(wasm_filepath)});
+      std::string wasm_public_path = public_path_for({wasm_key, filemap.at(wasm_filepath.string())});
       contents.replace(pattern_position, wasm_pattern.length(), '\'' + wasm_public_path + '\'');
     }
   }
