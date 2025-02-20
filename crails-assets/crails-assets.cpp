@@ -4,6 +4,7 @@
 #include <string_view>
 #include <regex>
 #include <crails/utils/split.hpp>
+#include <cstdlib>
 #include "file_mapper.hpp"
 #include "compression.hpp"
 #include "exclusion_pattern.hpp"
@@ -100,10 +101,12 @@ int main (int argc, char* argv[])
     if (generate_public_folder(files, output, compression))
     {
       bool success;
+      const char* autogen_folder_var = std::getenv("CRAILS_AUTOGEN_DIR");
+      string autogen_folder = autogen_folder_var ? autogen_folder_var : "app/autogen";
 
       success = options.count("update")
-        ? update_reference_files(files, "app/autogen", exclusion_pattern)
-        : generate_reference_files(files, "app/autogen", exclusion_pattern);
+        ? update_reference_files(files, autogen_folder, exclusion_pattern)
+        : generate_reference_files(files, autogen_folder, exclusion_pattern);
       return success ? 0 : -1;
     }
   }
