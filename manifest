@@ -1,6 +1,6 @@
 : 1
 name: crails-assets
-version: 1.0.0
+version: 2.0.0
 summary: asset compiler used by the crails framework
 license: BSD-C3
 description-file: README.md
