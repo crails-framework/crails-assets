@@ -1,7 +1,11 @@
-#import libs += libboost-process%lib{boost_process}
 import libs += libboost-program-options%lib{boost_program_options}
 import libs += libcrails-cli%lib{crails-cli}
 import libs += libcrails-semantics%lib{crails-semantics}
+
+if ($config.libcrails_cli.alt_build2_imports == false)
+  import libs += libboost-process%lib{boost_process}
+else
+  import intf_libs += libboost-process%lib{boost_process}
 
 exe{crails-assets}: {hxx ixx txx cxx}{**} $libs testscript
 
