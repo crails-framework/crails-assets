@@ -8,14 +8,16 @@
 
 extern bool with_source_maps;
 
-static const std::vector<std::string> sass_candidates{"scss", "node-sass"};
+static const std::vector<std::string> sass_candidates{"scss", "sass", "node-sass"};
 static const std::map<std::string, std::string> sass_options{
   {"scss",      "--style compressed"},
+  {"sass",      "--style compressed"},
   {"node-sass", "--output-style compressed"}
 };
 
 static const std::map<std::string, std::string> sass_sourcemap_options{
   {"scss",      "--sourcemap=inline"},
+  {"sass",      "--source-map --embed-source-map"},
   {"node-sass", "--source-map-embed"}
 };
 
