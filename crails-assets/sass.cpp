@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/process.hpp>
 #include <string_view>
 #include <regex>
 #include <filesystem>
@@ -52,20 +51,11 @@ bool generate_sass(const std::filesystem::path& input_path, const std::filesyste
     return true;
   if (sass_impl.first.length() > 0)
   {
-    boost::process::ipstream pipe_stream;
-    boost::process::child sass(
-      sass_command(sass_impl, input_path),
-      boost::process::std_out > pipe_stream
-    );
-    std::stringstream stream;
-    std::string line, injected_source;
+    std::string output, injected_source;
 
-    while (pipe_stream && std::getline(pipe_stream, line))
-      stream << line << '\n';
-    sass.wait();
-    if (sass.exit_code() != 0)
+    if (!Crails::run_command(sass_command(sass_impl, input_path), output))
       return false;
-    injected_source = post_filter(stream.str());
+    injected_source = post_filter(output);
     if (injected_source.length() == 0)
       return false;
     Crails::write_file("crails-assets", output_path.string(), injected_source);

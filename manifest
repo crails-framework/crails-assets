@@ -8,5 +8,4 @@ url: https://github.com/crails-framework/crails-assets.git
 email: michael@unetresgrossebite.com
 depends: * build2 >= 0.15.0
 depends: * bpkg >= 0.15.0
-depends: { libboost-process } >= 1.74.0
 depends: { libcrails-cli libcrails-semantics libcrails-readfile } ^2.0.0

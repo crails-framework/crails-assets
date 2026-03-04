@@ -1,5 +1,5 @@
 #include "file_mapper.hpp"
-#include <boost/process.hpp>
+#include <crails/cli/process.hpp>
 #include <sstream>
 #include <regex>
 #include <iostream>
@@ -58,15 +58,10 @@ bool FileMapper::collect_files(std::filesystem::path root, std::filesystem::path
 
 bool FileMapper::generate_checksum(const std::filesystem::path& root, const std::filesystem::path& source, const std::string& scope)
 {
-  boost::process::ipstream pipe_stream;
-  boost::process::child    sum_process(
-    "md5sum " + source.string(),
-    boost::process::std_out > pipe_stream
-  );
   std::string line;
   char        sum[32];
 
-  std::getline(pipe_stream, line);
+  Crails::run_command({"md5sum", {source.string()}}, line);
   if (line.length() > 32)
   {
     std::strncpy(sum, line.c_str(), 32);

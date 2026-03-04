@@ -1,6 +1,6 @@
 #include "file_mapper.hpp"
 #include "compression.hpp"
-#include <boost/process.hpp>
+#include <crails/cli/process.hpp>
 #include <filesystem>
 #include <regex>
 #include <iostream>
@@ -88,7 +88,6 @@ static bool generate_file(const FileMapper& filemap, const std::filesystem::path
 
 bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy compression)
 {
-  std::vector<std::shared_ptr<boost::process::child>> compression_processes;
   std::filesystem::path output_base(output_directory + '/' + public_scope);
 
   if (!std::filesystem::is_directory(output_base))
@@ -103,7 +102,6 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
   {
     std::filesystem::path input_path(it->first);
     std::filesystem::path output_path(output_base.string() + filename_with_checksum(*it));
-    std::shared_ptr<boost::process::child> process;
     std::vector<CompressionStrategy> strategies = {compression};
 
     // If the name finishes with .map, it is a map file, and needs to be named after the file it maps
@@ -147,18 +145,9 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
       strategies = {Gzip, Brotli};
     for (auto compression : strategies)
     {
-      process = std::make_shared<boost::process::child>(compress_command(compression, output_path));
-      compression_processes.push_back(process);
+      if (!Crails::run_command(compress_command(compression, output_path)))
+        return false;
     }
-  }
-  //
-  // Wait for the compression processes to end
-  //
-  for (auto process : compression_processes)
-  {
-    process->wait();
-    if (process->exit_code() != 0)
-      return false;
   }
   return true;
 }
