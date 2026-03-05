@@ -2,6 +2,7 @@
 #include "compression.hpp"
 #include <crails/cli/process.hpp>
 #include <filesystem>
+#include <functional>
 #include <regex>
 #include <iostream>
 

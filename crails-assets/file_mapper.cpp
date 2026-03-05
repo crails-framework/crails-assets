@@ -2,6 +2,7 @@
 #include <crails/cli/process.hpp>
 #include <sstream>
 #include <regex>
+#include <cstring>
 #include <iostream>
 
 bool FileMapper::get_key_from_alias(const std::string& alias, std::string& key) const
