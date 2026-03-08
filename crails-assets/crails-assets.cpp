@@ -10,7 +10,7 @@
 
 bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern&);
-bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy);
+bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy strategy, bool verbose);
 
 bool verbose_mode = false;
 bool with_source_maps = true;
@@ -97,7 +97,7 @@ int main (int argc, char* argv[])
     }
     if (verbose_mode)
       std::cout << "[crails-assets] outputing files to " << output << std::endl;
-    if (generate_public_folder(files, output, compression))
+    if (generate_public_folder(files, output, compression, verbose_mode))
     {
       bool success;
       const char* autogen_folder_var = std::getenv("CRAILS_AUTOGEN_DIR");

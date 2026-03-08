@@ -52,8 +52,10 @@ bool generate_sass(const std::filesystem::path& input_path, const std::filesyste
   if (sass_impl.first.length() > 0)
   {
     std::string output, injected_source;
+    std::string cmd = sass_command(sass_impl, input_path);
 
-    if (!Crails::run_command(sass_command(sass_impl, input_path), output))
+    std::cout << "[crails-assets] sass command: " << cmd << std::endl;
+    if (!Crails::run_command(cmd, output))
       return false;
     injected_source = post_filter(output);
     if (injected_source.length() == 0)

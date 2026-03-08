@@ -87,7 +87,7 @@ static bool generate_file(const FileMapper& filemap, const std::filesystem::path
   return ::copy_file(input_path, output_path);
 }
 
-bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy compression)
+bool generate_public_folder(FileMapper& filemap, const std::string& output_directory, CompressionStrategy compression, bool verbose_mode)
 {
   std::filesystem::path output_base(output_directory + '/' + public_scope);
 
@@ -120,9 +120,13 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
     // If a file with that name already exists, then the file hasn't changed since the last run
     if (std::filesystem::exists(output_path))
     {
+      if (verbose_mode)
+        std::cout << "[crails-assets] skipping unchanged file " << output_path << std::endl;
       ++it;
       continue ;
     }
+    else if (verbose_mode)
+      std::cout << "[crails-assets] generating file " << input_path << " -> " << output_path << std::endl;
 
     // Attempt to generate file in the public directory
     if (!generate_file(filemap, input_path, output_path))
@@ -134,6 +138,8 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
     // If no file has been generated, remove it from the FileMapper
     if (!std::filesystem::exists(output_path))
     {
+      if (verbose_mode)
+        std::cout << "[crails-assets] (!) output file was not generated, skipping" << std::endl;
       it = filemap.erase(it);
       continue ;
     }
@@ -142,6 +148,8 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
     // Apply compression on the generated file
     if (compression == NoCompression)
       continue ;
+    if (verbose_mode)
+      std::cout << "[crails-assets] generating compressed variants" << std::endl;
     else if (compression == AllCompressions)
       strategies = {Gzip, Brotli};
     for (auto compression : strategies)
@@ -149,6 +157,8 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
       if (!Crails::run_command(compress_command(compression, output_path)))
         return false;
     }
+    if (verbose_mode)
+      std::cout << "[crails-assets] generating compressed variants done" << std::endl;
   }
   return true;
 }
