@@ -31,7 +31,7 @@ std::string public_path_for(const std::pair<std::string,std::string>& name_and_c
 
 static std::string inject_asset_path(const FileMapper& filemap, const std::string& data)
 {
-  std::regex  pattern("asset_path\\(([^)])+\\)");
+  std::regex  pattern("asset_path\\(\"([^\"]+)\"\\)");
   auto        match = std::sregex_iterator(data.begin(), data.end(), pattern);
   std::string result;
   std::size_t last_pos = 0;
@@ -39,7 +39,7 @@ static std::string inject_asset_path(const FileMapper& filemap, const std::strin
 
   while (match != std::sregex_iterator())
   {
-    std::string asset_path = data.substr(match->position() + prefix_len, match->length() - prefix_len - 1);
+    std::string asset_path = (*match)[1].str();
     std::string asset_key;
 
     if (filemap.get_key_from_alias(asset_path, asset_key))
@@ -53,6 +53,10 @@ static std::string inject_asset_path(const FileMapper& filemap, const std::strin
     else
     {
       std::cout << "inject_asset_path: asset not found: " << asset_path << std::endl;
+      for (auto it = filemap.aliases.begin() ; it != filemap.aliases.end() ; ++it)
+      {
+        std::cout << "candidate: " << it->second << std::endl;
+      }
       return "";
     }
     match++;
