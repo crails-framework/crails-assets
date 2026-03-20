@@ -46,17 +46,13 @@ static std::string inject_asset_path(const FileMapper& filemap, const std::strin
     {
       std::string public_asset_path = public_path_for({asset_key, filemap.at(asset_key)});
 
-      result += data.substr(last_pos, match->position());
+      result += data.substr(last_pos, match->position() - last_pos);
       result += public_asset_path;
       last_pos = match->position() + match->length();
     }
     else
     {
       std::cout << "inject_asset_path: asset not found: " << asset_path << std::endl;
-      for (auto it = filemap.aliases.begin() ; it != filemap.aliases.end() ; ++it)
-      {
-        std::cout << "candidate: " << it->second << std::endl;
-      }
       return "";
     }
     match++;
