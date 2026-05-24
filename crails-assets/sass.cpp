@@ -2,6 +2,9 @@
 #include <string_view>
 #include <regex>
 #include <filesystem>
+#include <map>
+#include <sstream>
+#include <functional>
 #include <crails/cli/filesystem.hpp>
 #include <crails/cli/process.hpp>
 
