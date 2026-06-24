@@ -99,8 +99,8 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
 
 bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
 {
-  std::string assets_hpp;
-  std::string assets_cpp;
+  std::string assets_hpp, old_assets_hpp;
+  std::string assets_cpp, old_assets_cpp;
   bool loaded;
 
   loaded = Crails::read_file(output_path.data() + std::string("/assets.hpp"), assets_hpp)
@@ -110,6 +110,8 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
     std::cerr << "Could not open assets.hpp and/or assets.cpp" << std::endl;
     return false;
   }
+  old_assets_hpp = assets_hpp;
+  old_assets_cpp = assets_cpp;
   for (auto it = file_map.begin() ; it != file_map.end() ; ++it)
   {
     std::string alias = file_map.get_alias(it->first);
@@ -154,7 +156,9 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
       }
     }
   }
-  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), assets_hpp);
-  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), assets_cpp);
+  if (old_assets_hpp != assets_hpp)
+    Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), assets_hpp);
+  if (old_assets_cpp != assets_cpp)
+    Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), assets_cpp);
   return true;
 }
