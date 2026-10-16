@@ -30,7 +30,7 @@ public:
     return std::find(files.begin(), files.end(), file) != files.end();
   }
 
-  void protect(const std::string& file, std::stringstream& stream, std::function<void()> callback) const
+  void protect(const std::string& file, std::ostream& stream, std::function<void()> callback) const
   {
     if (matches(file))
       ifndef(stream, callback);
@@ -38,7 +38,7 @@ public:
       callback();
   }
 
-  void ifndef(std::stringstream& stream, std::function<void()> callback) const
+  void ifndef(std::ostream& stream, std::function<void()> callback) const
   {
     stream << "#ifndef " << define << std::endl;
     callback();

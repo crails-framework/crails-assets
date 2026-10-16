@@ -106,9 +106,9 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_js << std::endl << '}' << std::endl;
   stream_cpp << '}' << std::endl;
   stream_hpp << '}' << std::endl << "#endif" << std::endl;
-  return write_file_if_changed(base + "/assets.hpp", stream_hpp.str())
-      && write_file_if_changed(base + "/assets.cpp", stream_cpp.str())
-      && write_file_if_changed(base + "/assets.js",  stream_js.str());
+  return write_file_if_changed(std::string(output_path) + "/assets.hpp", stream_hpp.str())
+      && write_file_if_changed(std::string(output_path) + "/assets.cpp", stream_cpp.str())
+      && write_file_if_changed(std::string(output_path) + "/assets.js",  stream_js.str());
 }
 
 bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
@@ -117,8 +117,8 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
   std::string assets_cpp, old_assets_cpp;
   bool loaded;
 
-  loaded = Crails::read_file(output_path.data() + std::string("/assets.hpp"), assets_hpp)
-        && Crails::read_file(output_path.data() + std::string("/assets.cpp"), assets_cpp);
+  loaded = Crails::read_file(std::string(output_path) + std::string("/assets.hpp"), assets_hpp)
+        && Crails::read_file(std::string(output_path) + std::string("/assets.cpp"), assets_cpp);
   if (!loaded)
   {
     std::cerr << "Could not open assets.hpp and/or assets.cpp" << std::endl;

@@ -150,7 +150,7 @@ bool generate_public_folder(FileMapper& filemap, const std::string& output_direc
       continue ;
     if (verbose_mode)
       std::cout << "[crails-assets] generating compressed variants" << std::endl;
-    else if (compression == AllCompressions)
+    if (compression == AllCompressions)
       strategies = {Gzip, Brotli};
     for (auto compression : strategies)
     {

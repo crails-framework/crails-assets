@@ -116,7 +116,7 @@ bool generate_js(const std::filesystem::path& input_path, const std::filesystem:
     if (!has_sourcemaps)
       return true;
     Crails::read_file(output_path.string(), contents);
-    contents += sourcemap_comment(output_path);
+    contents += '\n' + sourcemap_comment(output_path);
   }
   else
     replace_sourcemaps(contents, output_path);
