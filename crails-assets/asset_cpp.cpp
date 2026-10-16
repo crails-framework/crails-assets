@@ -34,6 +34,21 @@ const std::vector<std::string> reserved_keywords{
   "xor", "xor_eq"
 };
 
+inline bool write_file_if_changed(const std::string& path, const std::string& contents)
+{
+  std::string existing;
+
+  if (!Crails::read_file(path, existing) && existing == contents)
+  {
+    if (!Crails::write_file("crails-assets", path, contents))
+    {
+      std::cerr << "Failed to write in file " << path << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
 static bool is_alphanumerical(char c)
 {
   return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'));
@@ -55,7 +70,7 @@ static std::string filepath_to_varname(const std::string& filepath)
 
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
 {
-  std::stringstream stream_hpp, stream_cpp, stream_js;
+  std::ostringstream stream_hpp, stream_cpp, stream_js;
   std::string_view assets_ns = "Assets";
   std::map<std::string, std::string> varname_map;
 
@@ -91,10 +106,9 @@ bool generate_reference_files(const FileMapper& file_map, std::string_view outpu
   stream_js << std::endl << '}' << std::endl;
   stream_cpp << '}' << std::endl;
   stream_hpp << '}' << std::endl << "#endif" << std::endl;
-  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), stream_hpp.str());
-  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), stream_cpp.str());
-  Crails::write_file("crails-assets", output_path.data() + std::string("/assets.js"),  stream_js.str());
-  return true;
+  return write_file_if_changed(base + "/assets.hpp", stream_hpp.str())
+      && write_file_if_changed(base + "/assets.cpp", stream_cpp.str())
+      && write_file_if_changed(base + "/assets.js",  stream_js.str());
 }
 
 bool update_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
@@ -116,15 +130,20 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
   {
     std::string alias = file_map.get_alias(it->first);
     std::string varname = filepath_to_varname(alias);
-    std::string pattern("extern const char* " + varname);
+    std::string pattern("extern const char* " + varname + ';');
 
     if (assets_hpp.find(pattern) == std::string::npos)
     {
-      stringstream stream_hpp, stream_cpp;
+      std::ostringstream stream_hpp, stream_cpp;
       auto add_pattern = std::string("namespace ") + assets_ns.data() + "\n{\n";
       auto hpp_start_at = assets_hpp.find(add_pattern);
       auto cpp_start_at = assets_cpp.find(add_pattern);
 
+      if (hpp_start_at == std::string::npos || cpp_start_at == std::string::npos)
+      {
+        std::cerr << "Malformed assets.hpp or assets.cpp, Assets namespace not found" << std::endl;
+        return false;
+      }
       stream_hpp << assets_hpp.substr(0, hpp_start_at) << add_pattern;
       stream_cpp << assets_cpp.substr(0, cpp_start_at) << add_pattern;
       exclusion_pattern.protect(it->first, stream_hpp, [&]()
@@ -138,7 +157,7 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
     }
     else
     {
-      stringstream stream_cpp;
+      std::ostringstream stream_cpp;
       std::regex cpp_pattern("const\\schar\\*\\s" + varname + "\\s=\\s\"[^\"]+\";");
       auto match = std::sregex_iterator(assets_cpp.begin(), assets_cpp.end(), cpp_pattern);
 
