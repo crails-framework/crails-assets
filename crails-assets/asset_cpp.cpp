@@ -2,6 +2,9 @@
 #include <sstream>
 #include <iostream>
 #include <regex>
+#include <map>
+#include <algorithm>
+#include <string_view>
 #include "file_mapper.hpp"
 #include "exclusion_pattern.hpp"
 
@@ -71,7 +74,6 @@ static std::string filepath_to_varname(const std::string& filepath)
 bool generate_reference_files(const FileMapper& file_map, std::string_view output_path, const ExclusionPattern& exclusion_pattern)
 {
   std::ostringstream stream_hpp, stream_cpp, stream_js;
-  std::string_view assets_ns = "Assets";
   std::map<std::string, std::string> varname_map;
 
   stream_hpp << "#ifndef APPLICATION_ASSETS_HPP" << std::endl;
@@ -176,8 +178,8 @@ bool update_reference_files(const FileMapper& file_map, std::string_view output_
     }
   }
   if (old_assets_hpp != assets_hpp)
-    Crails::write_file("crails-assets", output_path.data() + std::string("/assets.hpp"), assets_hpp);
+    Crails::write_file("crails-assets", string(output_path) + std::string("/assets.hpp"), assets_hpp);
   if (old_assets_cpp != assets_cpp)
-    Crails::write_file("crails-assets", output_path.data() + std::string("/assets.cpp"), assets_cpp);
+    Crails::write_file("crails-assets", string(output_path) + std::string("/assets.cpp"), assets_cpp);
   return true;
 }
