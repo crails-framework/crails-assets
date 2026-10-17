@@ -8,7 +8,7 @@ std::string compress_command(CompressionStrategy strategy, const std::filesystem
   switch (strategy)
   {
   case Gzip:
-    stream << "gzip -kf " << source.string();
+    stream << "gzip -knf " << source.string();
     break;
   case Brotli:
     stream << "brotli -kf " << source.string();
