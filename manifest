@@ -9,3 +9,4 @@ email: michael@unetresgrossebite.com
 depends: * build2 >= 0.15.0
 depends: * bpkg >= 0.15.0
 depends: { libcrails-cli libcrails-semantics libcrails-readfile } ^2.0.0
+depends: libboost-system >= 1.74.0
