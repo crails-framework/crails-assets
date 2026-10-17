@@ -103,6 +103,11 @@ int main (int argc, char* argv[])
       const char* autogen_folder_var = std::getenv("CRAILS_AUTOGEN_DIR");
       string autogen_folder = autogen_folder_var ? autogen_folder_var : "app/autogen";
 
+      if (!filesystem::is_directory(autogen_folder) && !filesystem::create_directories(autogen_folder))
+      {
+        std::cerr << "failed to create autogen folder " << autogen_folder << std::endl;
+        return -1;
+      }
       if (verbose_mode)
         std::cout << "[crails-assets] outputing reference files to " << autogen_folder << std::endl;
       success = options.count("update")
@@ -110,6 +115,8 @@ int main (int argc, char* argv[])
         : generate_reference_files(files, autogen_folder, exclusion_pattern);
       return success ? 0 : -1;
     }
+    else
+      std::cerr << "failed to generate public folder" << std::endl;
   }
   else
     std::cerr << "inputs and output arguments are required" << std::endl;
