@@ -41,7 +41,7 @@ inline bool write_file_if_changed(const std::string& path, const std::string& co
 {
   std::string existing;
 
-  if (!Crails::read_file(path, existing) && existing == contents)
+  if (!(Crails::read_file(path, existing) && existing == contents))
   {
     if (!Crails::write_file("crails-assets", path, contents))
     {

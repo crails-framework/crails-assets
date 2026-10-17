@@ -15,12 +15,22 @@ const std::string public_scope = "assets/";
 bool generate_sass(const std::filesystem::path& input_path, const std::filesystem::path& output_path, PostFilter post_filter);
 bool generate_js(const std::filesystem::path& input_path, const std::filesystem::path& output_path, const FileMapper&);
 
+const static std::map<std::string, std::string> extension_mapper{
+  {".sass", ".css"},
+  {".scss", ".css"},
+  {".mjs",  ".js"}
+};
+
 static std::string filename_with_checksum(const std::pair<std::string, std::string>& name_and_checksum)
 {
   std::filesystem::path filepath(name_and_checksum.first);
+  std::string extension = filepath.extension().string();
+  auto mapped_extension = extension_mapper.find(extension);
 
+  if (mapped_extension != extension_mapper.end())
+    extension = mapped_extension->second;
   if (filepath.has_stem())
-    return filepath.stem().string() + '-' + name_and_checksum.second + filepath.extension().string();
+    return filepath.stem().string() + '-' + name_and_checksum.second + extension;
   return filepath.filename().string() + '-' + name_and_checksum.second;
 }
 

@@ -95,6 +95,7 @@ int main (int argc, char* argv[])
       else
         return -1;
     }
+    files.resolve_dependency_checksums();
     if (verbose_mode)
       std::cout << "[crails-assets] outputing files to " << output << std::endl;
     if (generate_public_folder(files, output, compression, verbose_mode))
