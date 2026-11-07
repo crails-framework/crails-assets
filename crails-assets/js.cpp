@@ -19,6 +19,7 @@ static const std::vector<std::string> minify_candidates{
 };
 static const std::map<std::string, std::string> minify_options{
   {"closure-compiler", "--js \"$input\" --js_output_file \"$output\""},
+  {"terser",           "\"$input\" -o \"$output\" --compress"},
   {"uglifyjs",         "\"$input\" -o \"$output\" --compress"},
   {"yuicompressor",    "\"$input\" -o \"$output\""}
 };
